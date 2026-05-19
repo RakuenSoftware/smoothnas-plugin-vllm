@@ -1,0 +1,133 @@
+apiVersion: smoothnas.io/v1
+kind: Plugin
+metadata:
+  name: vllm
+  version: 0.1.0
+  description: |
+    vLLM OpenAI-compatible inference server using the official ROCm image for
+    AMD GPUs. Hugging Face cache data lives on the NVME slot of an
+    operator-chosen tier. Bearer-injected auth is enforced by the SmoothNAS
+    wrapper before requests reach vLLM.
+  vendor: smoothnas
+  homepage: https://github.com/RakuenSoftware/smoothnas-plugin-vllm
+artifact:
+  type: oci-image
+  image: ghcr.io/rakuensoftware/smoothnas-plugin-vllm:0.1.0-rocm
+container:
+  restartPolicy: unless-stopped
+  resources:
+    memory: ${MEMORY_LIMIT}
+volumes:
+  - name: huggingface-cache
+    mode: tier-bound
+    slot: NVME
+    minSize: 50G
+    bind: /root/.cache/huggingface
+ports:
+  - name: http
+    port: 8080
+    protocol: tcp
+    expose: true
+ui:
+  embed:
+    path: /
+    auth: bearer-injected
+profiles:
+  - gpu-amd
+  - rocm-runtime
+  - default-limits
+config:
+  - key: SMOOTHNAS_GPU
+    type: gpu
+    label: GPU
+    gpuVendor: amd
+    default: ''
+    description: |
+      AMD DRM render node to pass through. Leave automatic to use the host
+      default; selecting a device narrows passthrough to that render node.
+  - key: MODEL_ID
+    type: string
+    label: Model
+    default: Qwen/Qwen3-0.6B
+    description: Hugging Face model id or local model path passed to vLLM.
+  - key: HF_TOKEN
+    type: string
+    label: Hugging Face token
+    default: ''
+    secret: true
+    description: Optional Hugging Face token for gated model downloads.
+  - key: VLLM_TENSOR_PARALLEL_SIZE
+    type: number
+    label: Tensor parallel size
+    default: '1'
+    min: '1'
+    step: '1'
+    description: Number of GPUs used for tensor parallelism.
+  - key: VLLM_MAX_MODEL_LEN
+    type: number
+    label: Max model length
+    default: '32768'
+    min: '1024'
+    step: '1024'
+    unit: tokens
+    description: Maximum context length passed to vLLM.
+  - key: VLLM_GPU_MEMORY_UTILIZATION
+    type: number
+    label: GPU memory utilization
+    default: '0.90'
+    min: '0.10'
+    max: '1'
+    step: '0.01'
+    description: Fraction of GPU memory vLLM may reserve.
+  - key: VLLM_DTYPE
+    type: select
+    label: Dtype
+    default: auto
+    options:
+      - value: auto
+      - value: float16
+      - value: bfloat16
+    description: vLLM dtype selection.
+  - key: VLLM_QUANTIZATION
+    type: select
+    label: Quantization
+    default: none
+    options:
+      - value: none
+      - value: fp8
+      - value: awq
+      - value: gptq
+    description: Optional vLLM quantization mode.
+  - key: VLLM_TRUST_REMOTE_CODE
+    type: select
+    label: Trust remote code
+    default: 'off'
+    options:
+      - value: 'off'
+      - value: 'on'
+    description: Enable only for model repos whose custom code you trust.
+  - key: VLLM_ROCM_USE_AITER
+    type: select
+    label: AITER kernels
+    default: ''
+    options:
+      - value: ''
+      - value: '0'
+      - value: '1'
+    description: Optional ROCm AITER toggle inherited by vLLM.
+  - key: HSA_OVERRIDE_GFX_VERSION
+    type: string
+    label: HSA gfx override
+    default: ''
+    description: Optional ROCm gfx override for unsupported consumer GPUs.
+  - key: MEMORY_LIMIT
+    type: string
+    label: Container memory
+    default: 64GiB
+    description: LXC memory limit for the vLLM container.
+  - key: SMOOTHNAS_BEARER_EXPECTED
+    type: string
+    secret: true
+    description: |
+      Auto-populated by SmoothNAS to match the rotated bearer token.
+      Do not edit manually; the wrapper validates every request against it.

@@ -1,0 +1,128 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: wrapper tests
+        working-directory: wrapper
+        run: |
+          go vet ./...
+          go test -race ./...
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute lowercase image ref
+        id: image
+        run: echo "ref=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ steps.version.outputs.version }}-rocm" >> "$GITHUB_OUTPUT"
+
+      - name: Build + push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.image.outputs.ref }}
+          build-args: |
+            VLLM_BASE=vllm/vllm-openai-rocm:latest
+          provenance: false
+
+      - name: Render manifest with pinned digest
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          digest="${{ steps.build.outputs.digest }}"
+          if [ -z "$digest" ]; then
+            echo "buildx did not return an image digest" >&2
+            exit 1
+          fi
+          mkdir -p release
+          image="ghcr.io/rakuensoftware/smoothnas-plugin-vllm:${version}-rocm"
+          python3 - smoothnas-plugin.yaml release/smoothnas-plugin.yaml "$version" "$image" "$digest" <<'EOF'
+          import re
+          import sys
+
+          src, out, version, image, digest = sys.argv[1:]
+          with open(src, encoding="utf-8") as f:
+              manifest = f.read()
+
+          manifest = re.sub(
+              r'(?m)^(\s*version:\s*)[^\s#]+(\s*#.*)?$',
+              rf'\g<1>{version}\2',
+              manifest,
+              count=1,
+          )
+          manifest = re.sub(
+              r'(?m)^(\s*image:\s*)ghcr\.io/rakuensoftware/smoothnas-plugin-vllm:[^\s#]+(?:@sha256:[0-9a-f]+)?(\s*#.*)?$',
+              rf'\g<1>{image}\2',
+              manifest,
+              count=1,
+          )
+          digest_re = re.compile(r'(?m)^(\s*)digest:\s*sha256:[0-9a-f]+(\s*#.*)?$')
+          if digest_re.search(manifest):
+              manifest = digest_re.sub(rf'\g<1>digest: {digest}\2', manifest, count=1)
+          else:
+              manifest = re.sub(
+                  r'(?m)^(\s*image:\s*[^\n]*\n)',
+                  rf'\1  digest: {digest}\n',
+                  manifest,
+                  count=1,
+              )
+
+          with open(out, "w", encoding="utf-8") as f:
+              f.write(manifest)
+          EOF
+
+      - name: Render index.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cat > release/index.json <<EOF
+          {
+            "plugin": "vllm",
+            "version": "${VERSION}",
+            "variants": [
+              { "name": "rocm", "manifest": "smoothnas-plugin.yaml", "profile": "gpu-amd" }
+            ]
+          }
+          EOF
+
+      - name: Attach manifest to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/smoothnas-plugin.yaml
+            release/index.json
