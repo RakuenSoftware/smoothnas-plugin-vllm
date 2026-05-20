@@ -30,6 +30,12 @@ RUN if [ -d /opt/rocm-7.2.2 ]; then \
       apt-get download comgr miopen-hip rccl rocrand rocsolver rocsparse; \
       for deb in ./*.deb; do dpkg-deb -x "${deb}" /; done; \
       ldconfig; \
+      export LD_LIBRARY_PATH="/usr/local/lib/python3.12/dist-packages/torch/lib:/opt/rocm/lib:/usr/local/lib:${LD_LIBRARY_PATH:-}"; \
+      test -s /usr/local/lib/python3.12/dist-packages/torch/lib/libtorch_cpu.so; \
+      test -s /usr/local/lib/python3.12/dist-packages/torch/lib/libtorch_hip.so; \
+      test -s /opt/rocm/lib/libMIOpen.so.1; \
+      test -s /opt/rocm/lib/librocsolver.so.0; \
+      python3 -c 'import torch, triton, vllm; print("torch", torch.__version__, "hip", torch.version.hip); print("triton", getattr(triton, "__version__", "unknown")); print("vllm", getattr(vllm, "__version__", "unknown"))'; \
       rm -rf /tmp/rocm-debs /var/lib/apt/lists/*; \
     fi
 
@@ -38,6 +44,7 @@ COPY --from=wrapper-build /smoothnas-vllm-wrapper /usr/local/bin/smoothnas-vllm-
 ENV VLLM_BIN=vllm
 ENV VLLM_PORT=8081
 ENV LISTEN_ADDR=:8080
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.12/dist-packages/torch/lib:/opt/rocm/lib:/usr/local/lib:${LD_LIBRARY_PATH}
 
 EXPOSE 8080
 
