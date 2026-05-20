@@ -98,6 +98,24 @@ func TestBuildVLLMArgsSkipsUnsetOptionalFlags(t *testing.T) {
 	}
 }
 
+func TestChildEnvFiltersWrapperConfig(t *testing.T) {
+	got := childEnv([]string{
+		"MODEL_ID=model",
+		"VLLM_KV_CACHE_DTYPE=turboquant_k8v4",
+		"VLLM_ROCM_USE_AITER=1",
+		"HF_TOKEN=secret",
+		"PATH=/usr/bin",
+	})
+	want := []string{
+		"VLLM_ROCM_USE_AITER=1",
+		"HF_TOKEN=secret",
+		"PATH=/usr/bin",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("env = %#v want %#v", got, want)
+	}
+}
+
 func TestAuthHandlerRejectsMissingBearer(t *testing.T) {
 	h := authHandler("secret", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		t.Error("downstream handler should not run")

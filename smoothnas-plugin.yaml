@@ -168,7 +168,7 @@ config:
   - key: VLLM_DTYPE
     type: select
     label: Dtype
-    default: auto
+    default: float16
     options:
       - value: auto
       - value: float16
@@ -200,7 +200,7 @@ config:
   - key: MEMORY_LIMIT
     type: string
     label: Container memory
-    default: 96GiB
+    default: 16GiB
     description: LXC memory limit for the vLLM container.
   - key: SMOOTHNAS_BEARER_EXPECTED
     type: string

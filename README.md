@@ -39,7 +39,7 @@ In the SmoothNAS UI:
 4. Set `HF_TOKEN` if the model is gated
 5. Start the plugin and open `/plugins/vllm/`
 
-CUDA first-run defaults target Gemma4 Q5 26B on the SmoothNAS runner:
+First-run defaults target Gemma4 Q5 26B on the SmoothNAS runner:
 
 - `MODEL_ID=unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q5_K_XL`
 - `VLLM_TOKENIZER=google/gemma-4-26B-A4B-it`
@@ -52,15 +52,17 @@ CUDA first-run defaults target Gemma4 Q5 26B on the SmoothNAS runner:
 - `VLLM_GPU_MEMORY_UTILIZATION=0.92`
 - `VLLM_KV_CACHE_DTYPE=turboquant_k8v4`
 - `VLLM_SPECULATIVE_CONFIG={"method":"mtp","model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}`
-- `VLLM_DTYPE=auto`
+- `VLLM_DTYPE=float16`
 - `VLLM_QUANTIZATION=none`
 - `VLLM_TRUST_REMOTE_CODE=on`
-- `MEMORY_LIMIT=96GiB`
+- `MEMORY_LIMIT=16GiB`
 
-The ROCm manifest keeps a small Qwen default so operators can confirm the AMD
-runtime before moving to a larger model. `HSA_OVERRIDE_GFX_VERSION` is exposed
-there for consumer AMD GPUs that need an override. Leave it empty on supported
-ROCm hardware.
+The ROCm image includes a build-time repair pass for the vLLM 0.21.0 ROCm 7.2.2
+stack: it reinstalls the matching PyTorch and vLLM ROCm wheels and force-extracts
+the ROCm shared-library payloads that vLLM needs at runtime. This keeps SmoothNAS
+installs plug-and-play instead of requiring host-level vLLM or manual container
+repairs. `HSA_OVERRIDE_GFX_VERSION` is exposed for consumer AMD GPUs that need an
+override. Leave it empty on supported ROCm hardware.
 
 ## Local development
 

@@ -12,6 +12,27 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /smoothnas-vllm-wrapper .
 
 FROM ${VLLM_BASE}
 
+ARG VLLM_ROCM_TORCH_WHEEL=https://wheels.vllm.ai/rocm/ad7125a431e176d4161099480a66f0169609a690/torch-2.10.0%2Bgit8514f05-cp312-cp312-manylinux_2_35_x86_64.whl
+ARG VLLM_ROCM_TRITON_WHEEL=https://wheels.vllm.ai/rocm/ad7125a431e176d4161099480a66f0169609a690/triton-3.6.0-cp312-cp312-manylinux_2_35_x86_64.whl
+ARG VLLM_ROCM_TRITON_KERNELS_WHEEL=https://wheels.vllm.ai/rocm/ad7125a431e176d4161099480a66f0169609a690/triton_kernels-1.0.0-py3-none-any.whl
+ARG VLLM_ROCM_VLLM_WHEEL=https://wheels.vllm.ai/rocm/ad7125a431e176d4161099480a66f0169609a690/vllm-0.21.0%2Brocm722-cp312-cp312-manylinux_2_34_x86_64.whl
+
+RUN if [ -d /opt/rocm-7.2.2 ]; then \
+      set -eux; \
+      python3 -m pip install --no-cache-dir --force-reinstall --no-deps \
+        "${VLLM_ROCM_TORCH_WHEEL}" \
+        "${VLLM_ROCM_TRITON_WHEEL}" \
+        "${VLLM_ROCM_TRITON_KERNELS_WHEEL}" \
+        "${VLLM_ROCM_VLLM_WHEEL}"; \
+      mkdir -p /tmp/rocm-debs; \
+      cd /tmp/rocm-debs; \
+      apt-get update; \
+      apt-get download comgr miopen-hip rccl rocrand rocsolver rocsparse; \
+      for deb in ./*.deb; do dpkg-deb -x "${deb}" /; done; \
+      ldconfig; \
+      rm -rf /tmp/rocm-debs /var/lib/apt/lists/*; \
+    fi
+
 COPY --from=wrapper-build /smoothnas-vllm-wrapper /usr/local/bin/smoothnas-vllm-wrapper
 
 ENV VLLM_BIN=vllm

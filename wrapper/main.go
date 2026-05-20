@@ -60,6 +60,7 @@ func main() {
 	cmd := exec.CommandContext(ctx, vllmBin, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Env = childEnv(os.Environ())
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("start %s: %v", vllmBin, err)
 	}
@@ -143,6 +144,51 @@ func buildVLLMArgs(port string, extra []string, getenv func(string) string) ([]s
 	appendTriStateFlag("VLLM_KV_SHARING_FAST_PREFILL", "--kv-sharing-fast-prefill", "--no-kv-sharing-fast-prefill")
 	args = append(args, extra...)
 	return args, nil
+}
+
+func childEnv(env []string) []string {
+	out := env[:0]
+	for _, entry := range env {
+		key, _, ok := strings.Cut(entry, "=")
+		if !ok || wrapperOnlyEnv(key) {
+			continue
+		}
+		out = append(out, entry)
+	}
+	return out
+}
+
+func wrapperOnlyEnv(key string) bool {
+	switch key {
+	case "MODEL_ID",
+		"VLLM_BIN",
+		"VLLM_PORT",
+		"VLLM_TOKENIZER",
+		"VLLM_HF_CONFIG_PATH",
+		"VLLM_LOAD_FORMAT",
+		"VLLM_SERVED_MODEL_NAME",
+		"VLLM_DOWNLOAD_DIR",
+		"VLLM_TENSOR_PARALLEL_SIZE",
+		"VLLM_MAX_MODEL_LEN",
+		"VLLM_MAX_NUM_SEQS",
+		"VLLM_MAX_NUM_BATCHED_TOKENS",
+		"VLLM_GPU_MEMORY_UTILIZATION",
+		"VLLM_KV_CACHE_DTYPE",
+		"VLLM_KV_CACHE_MEMORY_BYTES",
+		"VLLM_CPU_OFFLOAD_GB",
+		"VLLM_SPECULATIVE_CONFIG",
+		"VLLM_ADDITIONAL_CONFIG",
+		"VLLM_DTYPE",
+		"VLLM_QUANTIZATION",
+		"VLLM_TRUST_REMOTE_CODE",
+		"VLLM_ENABLE_PREFIX_CACHING",
+		"VLLM_ENABLE_CHUNKED_PREFILL",
+		"VLLM_KV_SHARING_FAST_PREFILL",
+		"MEMORY_LIMIT":
+		return true
+	default:
+		return false
+	}
 }
 
 func onOff(value string) bool {

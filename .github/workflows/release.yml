@@ -32,7 +32,7 @@ jobs:
       matrix:
         variant:
           - { name: cuda, base: vllm/vllm-openai:latest }
-          - { name: rocm, base: vllm/vllm-openai-rocm:latest }
+          - { name: rocm, base: vllm/vllm-openai-rocm:v0.21.0 }
     steps:
       - uses: actions/checkout@v4
 
