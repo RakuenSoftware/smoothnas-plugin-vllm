@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.0...v0.2.1) (2026-05-20)
+
+
+### Bug Fixes
+
+* validate ROCm vLLM runtime libraries ([#3](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/issues/3)) ([6f47761](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/commit/6f477613616eba104a2125f5683145673c91944e))
+
 ## [0.2.0](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.1.0...v0.2.0) (2026-05-20)
 
 
