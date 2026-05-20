@@ -129,6 +129,10 @@ func buildVLLMArgs(port string, extra []string, getenv func(string) string) ([]s
 	appendValueFlag("VLLM_KV_CACHE_MEMORY_BYTES", "--kv-cache-memory-bytes")
 	appendValueFlag("VLLM_CPU_OFFLOAD_GB", "--cpu-offload-gb")
 	appendValueFlag("VLLM_SPECULATIVE_CONFIG", "--speculative-config")
+	appendValueFlag("VLLM_TOOL_CALL_PARSER", "--tool-call-parser")
+	appendValueFlag("VLLM_REASONING_PARSER", "--reasoning-parser")
+	appendValueFlag("VLLM_CHAT_TEMPLATE", "--chat-template")
+	appendValueFlag("VLLM_LIMIT_MM_PER_PROMPT", "--limit-mm-per-prompt")
 	appendValueFlag("VLLM_ADDITIONAL_CONFIG", "--additional-config")
 	if dtype := strings.TrimSpace(getenv("VLLM_DTYPE")); dtype != "" && dtype != "auto" {
 		args = append(args, "--dtype", dtype)
@@ -141,6 +145,8 @@ func buildVLLMArgs(port string, extra []string, getenv func(string) string) ([]s
 	}
 	appendTriStateFlag("VLLM_ENABLE_PREFIX_CACHING", "--enable-prefix-caching", "--no-enable-prefix-caching")
 	appendTriStateFlag("VLLM_ENABLE_CHUNKED_PREFILL", "--enable-chunked-prefill", "--no-enable-chunked-prefill")
+	appendTriStateFlag("VLLM_ENABLE_AUTO_TOOL_CHOICE", "--enable-auto-tool-choice", "")
+	appendTriStateFlag("VLLM_ASYNC_SCHEDULING", "--async-scheduling", "")
 	appendTriStateFlag("VLLM_KV_SHARING_FAST_PREFILL", "--kv-sharing-fast-prefill", "--no-kv-sharing-fast-prefill")
 	args = append(args, extra...)
 	return args, nil
@@ -177,12 +183,18 @@ func wrapperOnlyEnv(key string) bool {
 		"VLLM_KV_CACHE_MEMORY_BYTES",
 		"VLLM_CPU_OFFLOAD_GB",
 		"VLLM_SPECULATIVE_CONFIG",
+		"VLLM_TOOL_CALL_PARSER",
+		"VLLM_REASONING_PARSER",
+		"VLLM_CHAT_TEMPLATE",
+		"VLLM_LIMIT_MM_PER_PROMPT",
 		"VLLM_ADDITIONAL_CONFIG",
 		"VLLM_DTYPE",
 		"VLLM_QUANTIZATION",
 		"VLLM_TRUST_REMOTE_CODE",
 		"VLLM_ENABLE_PREFIX_CACHING",
 		"VLLM_ENABLE_CHUNKED_PREFILL",
+		"VLLM_ENABLE_AUTO_TOOL_CHOICE",
+		"VLLM_ASYNC_SCHEDULING",
 		"VLLM_KV_SHARING_FAST_PREFILL",
 		"MEMORY_LIMIT":
 		return true

@@ -57,6 +57,16 @@ First-run defaults target Gemma4 Q5 26B on the SmoothNAS runner:
 - `VLLM_TRUST_REMOTE_CODE=on`
 - `MEMORY_LIMIT=16GiB`
 
+Gemma4 tool-use and reasoning parser flags are also exposed for operators who
+need OpenAI tool-calling behavior:
+
+- `VLLM_TOOL_CALL_PARSER=gemma4`
+- `VLLM_REASONING_PARSER=gemma4`
+- `VLLM_ENABLE_AUTO_TOOL_CHOICE=on`
+- `VLLM_CHAT_TEMPLATE=/path/to/template.jinja`
+- `VLLM_LIMIT_MM_PER_PROMPT={"image":0,"audio":0}`
+- `VLLM_ASYNC_SCHEDULING=on`
+
 The ROCm image includes a build-time repair pass for the vLLM 0.21.0 ROCm 7.2.2
 stack: it reinstalls the matching PyTorch and vLLM ROCm wheels and force-extracts
 the ROCm shared-library payloads that vLLM needs at runtime. This keeps SmoothNAS
