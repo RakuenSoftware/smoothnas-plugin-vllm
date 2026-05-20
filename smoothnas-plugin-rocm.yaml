@@ -4,15 +4,15 @@ metadata:
   name: vllm
   version: 0.1.0
   description: |
-    vLLM OpenAI-compatible inference server using the official CUDA image for
-    NVIDIA GPUs. Hugging Face cache data lives on the NVME slot of an
+    vLLM OpenAI-compatible inference server using the official ROCm image for
+    AMD GPUs. Hugging Face cache data lives on the NVME slot of an
     operator-chosen tier. Bearer-injected auth is enforced by the SmoothNAS
     wrapper before requests reach vLLM.
   vendor: smoothnas
   homepage: https://github.com/RakuenSoftware/smoothnas-plugin-vllm
 artifact:
   type: oci-image
-  image: ghcr.io/rakuensoftware/smoothnas-plugin-vllm:0.1.0-cuda
+  image: ghcr.io/rakuensoftware/smoothnas-plugin-vllm:0.1.0-rocm
 container:
   restartPolicy: unless-stopped
   resources:
@@ -33,21 +33,22 @@ ui:
     path: /
     auth: bearer-injected
 profiles:
-  - gpu-nvidia
+  - gpu-amd
+  - rocm-runtime
   - default-limits
 config:
   - key: SMOOTHNAS_GPU
     type: gpu
     label: GPU
-    gpuVendor: nvidia
+    gpuVendor: amd
     default: ''
     description: |
-      NVIDIA GPU device to pass through. Leave automatic to use the host
-      default; selecting a device narrows passthrough to that GPU.
+      AMD DRM render node to pass through. Leave automatic to use the host
+      default; selecting a device narrows passthrough to that render node.
   - key: MODEL_ID
     type: string
     label: Model
-    default: unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q5_K_XL
+    default: Qwen/Qwen3-0.6B
     description: Hugging Face model id, local model path, or GGUF repo:quant passed to vLLM.
   - key: HF_TOKEN
     type: string
@@ -58,28 +59,23 @@ config:
   - key: VLLM_TOKENIZER
     type: string
     label: Tokenizer
-    default: google/gemma-4-26B-A4B-it
-    description: Tokenizer id/path, required when MODEL_ID points at a GGUF quant.
+    default: ''
+    description: Optional tokenizer id/path, recommended when MODEL_ID points at a GGUF quant.
   - key: VLLM_HF_CONFIG_PATH
     type: string
     label: HF config path
-    default: google/gemma-4-26B-A4B-it
-    description: Hugging Face config id/path for GGUF models.
+    default: ''
+    description: Optional Hugging Face config id/path for GGUF models.
   - key: VLLM_LOAD_FORMAT
     type: select
     label: Load format
-    default: gguf
+    default: auto
     options:
       - value: auto
       - value: gguf
       - value: safetensors
       - value: bitsandbytes
     description: vLLM weight loader selection.
-  - key: VLLM_SERVED_MODEL_NAME
-    type: string
-    label: Served model name
-    default: gemma4-q5-26b
-    description: Optional OpenAI model name exposed by vLLM.
   - key: VLLM_TENSOR_PARALLEL_SIZE
     type: number
     label: Tensor parallel size
@@ -90,7 +86,7 @@ config:
   - key: VLLM_MAX_MODEL_LEN
     type: number
     label: Max model length
-    default: '65536'
+    default: '32768'
     min: '1024'
     step: '1024'
     unit: tokens
@@ -98,22 +94,22 @@ config:
   - key: VLLM_MAX_NUM_SEQS
     type: number
     label: Max sequences
-    default: '4'
+    default: ''
     min: '1'
     step: '1'
-    description: Maximum number of concurrent 64k slots.
+    description: Optional maximum number of concurrent sequences processed by vLLM.
   - key: VLLM_MAX_NUM_BATCHED_TOKENS
     type: number
     label: Max batched tokens
-    default: '262144'
+    default: ''
     min: '1024'
     step: '1024'
     unit: tokens
-    description: Scheduler token budget for four 64k slots.
+    description: Optional scheduler token budget per iteration.
   - key: VLLM_GPU_MEMORY_UTILIZATION
     type: number
     label: GPU memory utilization
-    default: '0.92'
+    default: '0.90'
     min: '0.10'
     max: '1'
     step: '0.01'
@@ -121,7 +117,7 @@ config:
   - key: VLLM_KV_CACHE_DTYPE
     type: select
     label: KV cache dtype
-    default: turboquant_k8v4
+    default: auto
     options:
       - value: auto
       - value: fp8
@@ -129,42 +125,12 @@ config:
       - value: fp8_e5m2
       - value: int8_per_token_head
       - value: turboquant_k8v4
-    description: vLLM KV cache storage type. turboquant_k8v4 is the TurboQuant K8/V4 preset.
-  - key: VLLM_KV_CACHE_MEMORY_BYTES
-    type: string
-    label: KV cache memory
-    default: ''
-    description: Optional fixed KV cache size accepted by vLLM, such as 20G.
-  - key: VLLM_CPU_OFFLOAD_GB
-    type: number
-    label: CPU offload GiB
-    default: ''
-    min: '0'
-    step: '1'
-    description: Optional CPU offload budget for fitting larger checkpoints.
+    description: vLLM KV cache storage type.
   - key: VLLM_SPECULATIVE_CONFIG
     type: string
     label: Speculative config
-    default: '{"method":"mtp","model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}'
-    description: JSON passed to --speculative-config for Gemma4 MTP.
-  - key: VLLM_ENABLE_PREFIX_CACHING
-    type: select
-    label: Prefix caching
-    default: 'on'
-    options:
-      - value: auto
-      - value: 'off'
-      - value: 'on'
-    description: Optional vLLM prefix cache toggle.
-  - key: VLLM_ENABLE_CHUNKED_PREFILL
-    type: select
-    label: Chunked prefill
-    default: auto
-    options:
-      - value: auto
-      - value: 'off'
-      - value: 'on'
-    description: Optional vLLM chunked prefill toggle.
+    default: ''
+    description: Optional JSON passed to --speculative-config.
   - key: VLLM_DTYPE
     type: select
     label: Dtype
@@ -187,20 +153,25 @@ config:
   - key: VLLM_TRUST_REMOTE_CODE
     type: select
     label: Trust remote code
-    default: 'on'
+    default: 'off'
     options:
       - value: 'off'
       - value: 'on'
     description: Enable only for model repos whose custom code you trust.
-  - key: VLLM_ADDITIONAL_CONFIG
+  - key: VLLM_ROCM_USE_AITER
     type: string
-    label: Additional config
+    label: AITER kernels
     default: ''
-    description: Optional raw JSON passed to --additional-config.
+    description: Optional ROCm AITER toggle inherited by vLLM.
+  - key: HSA_OVERRIDE_GFX_VERSION
+    type: string
+    label: HSA gfx override
+    default: ''
+    description: Optional ROCm gfx override for unsupported consumer GPUs.
   - key: MEMORY_LIMIT
     type: string
     label: Container memory
-    default: 96GiB
+    default: 64GiB
     description: LXC memory limit for the vLLM container.
   - key: SMOOTHNAS_BEARER_EXPECTED
     type: string

@@ -103,9 +103,32 @@ func buildVLLMArgs(port string, extra []string, getenv func(string) string) ([]s
 			args = append(args, flag, value)
 		}
 	}
+	appendTriStateFlag := func(envKey, onFlag, offFlag string) {
+		value, ok := boolEnv(getenv(envKey))
+		if !ok {
+			return
+		}
+		if value {
+			args = append(args, onFlag)
+		} else if offFlag != "" {
+			args = append(args, offFlag)
+		}
+	}
+	appendValueFlag("VLLM_TOKENIZER", "--tokenizer")
+	appendValueFlag("VLLM_HF_CONFIG_PATH", "--hf-config-path")
+	appendValueFlag("VLLM_LOAD_FORMAT", "--load-format")
+	appendValueFlag("VLLM_SERVED_MODEL_NAME", "--served-model-name")
+	appendValueFlag("VLLM_DOWNLOAD_DIR", "--download-dir")
 	appendValueFlag("VLLM_TENSOR_PARALLEL_SIZE", "--tensor-parallel-size")
 	appendValueFlag("VLLM_MAX_MODEL_LEN", "--max-model-len")
+	appendValueFlag("VLLM_MAX_NUM_SEQS", "--max-num-seqs")
+	appendValueFlag("VLLM_MAX_NUM_BATCHED_TOKENS", "--max-num-batched-tokens")
 	appendValueFlag("VLLM_GPU_MEMORY_UTILIZATION", "--gpu-memory-utilization")
+	appendValueFlag("VLLM_KV_CACHE_DTYPE", "--kv-cache-dtype")
+	appendValueFlag("VLLM_KV_CACHE_MEMORY_BYTES", "--kv-cache-memory-bytes")
+	appendValueFlag("VLLM_CPU_OFFLOAD_GB", "--cpu-offload-gb")
+	appendValueFlag("VLLM_SPECULATIVE_CONFIG", "--speculative-config")
+	appendValueFlag("VLLM_ADDITIONAL_CONFIG", "--additional-config")
 	if dtype := strings.TrimSpace(getenv("VLLM_DTYPE")); dtype != "" && dtype != "auto" {
 		args = append(args, "--dtype", dtype)
 	}
@@ -115,16 +138,26 @@ func buildVLLMArgs(port string, extra []string, getenv func(string) string) ([]s
 	if onOff(getenv("VLLM_TRUST_REMOTE_CODE")) {
 		args = append(args, "--trust-remote-code")
 	}
+	appendTriStateFlag("VLLM_ENABLE_PREFIX_CACHING", "--enable-prefix-caching", "--no-enable-prefix-caching")
+	appendTriStateFlag("VLLM_ENABLE_CHUNKED_PREFILL", "--enable-chunked-prefill", "--no-enable-chunked-prefill")
+	appendTriStateFlag("VLLM_KV_SHARING_FAST_PREFILL", "--kv-sharing-fast-prefill", "--no-kv-sharing-fast-prefill")
 	args = append(args, extra...)
 	return args, nil
 }
 
 func onOff(value string) bool {
+	enabled, ok := boolEnv(value)
+	return ok && enabled
+}
+
+func boolEnv(value string) (bool, bool) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "1", "true", "yes", "on":
-		return true
+		return true, true
+	case "0", "false", "no", "off":
+		return false, true
 	default:
-		return false
+		return false, false
 	}
 }
 

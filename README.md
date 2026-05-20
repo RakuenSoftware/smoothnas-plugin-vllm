@@ -1,19 +1,20 @@
 # smoothnas-plugin-vllm
 
-SmoothNAS plugin for [vLLM](https://github.com/vllm-project/vllm) on AMD ROCm.
+SmoothNAS plugin for [vLLM](https://github.com/vllm-project/vllm) on NVIDIA
+CUDA and AMD ROCm.
 It runs vLLM's OpenAI-compatible API inside a SmoothNAS-managed LXC system
-container with AMD GPU passthrough, tier-bound Hugging Face cache storage, and
+container with GPU passthrough, tier-bound Hugging Face cache storage, and
 bearer-injected auth from the SmoothNAS UI.
 
 ## Variant
 
 | Manifest | Image tag | Profiles | Use when |
 |----------|-----------|----------|----------|
-| `smoothnas-plugin.yaml` | `ghcr.io/rakuensoftware/smoothnas-plugin-vllm:VER-rocm` | `gpu-amd`, `rocm-runtime` | Host has an AMD GPU with ROCm/KFD support |
+| `smoothnas-plugin.yaml` | `ghcr.io/rakuensoftware/smoothnas-plugin-vllm:VER-cuda` | `gpu-nvidia` | Host has an NVIDIA GPU with CUDA support |
+| `smoothnas-plugin-rocm.yaml` | `ghcr.io/rakuensoftware/smoothnas-plugin-vllm:VER-rocm` | `gpu-amd`, `rocm-runtime` | Host has an AMD GPU with ROCm/KFD support |
 
-The image is built on the official `vllm/vllm-openai-rocm` base image. That is
-the current upstream-recommended image for ROCm; older AMD `rocm/vllm` images
-are deprecated upstream.
+The CUDA image is built on `vllm/vllm-openai`; the ROCm image is built on
+`vllm/vllm-openai-rocm`.
 
 ## Why a wrapper image?
 
@@ -38,19 +39,28 @@ In the SmoothNAS UI:
 4. Set `HF_TOKEN` if the model is gated
 5. Start the plugin and open `/plugins/vllm/`
 
-Conservative first-run defaults:
+CUDA first-run defaults target Gemma4 Q5 26B on the SmoothNAS runner:
 
-- `MODEL_ID=Qwen/Qwen3-0.6B`
+- `MODEL_ID=unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q5_K_XL`
+- `VLLM_TOKENIZER=google/gemma-4-26B-A4B-it`
+- `VLLM_HF_CONFIG_PATH=google/gemma-4-26B-A4B-it`
+- `VLLM_LOAD_FORMAT=gguf`
 - `VLLM_TENSOR_PARALLEL_SIZE=1`
-- `VLLM_MAX_MODEL_LEN=32768`
-- `VLLM_GPU_MEMORY_UTILIZATION=0.90`
+- `VLLM_MAX_MODEL_LEN=65536`
+- `VLLM_MAX_NUM_SEQS=4`
+- `VLLM_MAX_NUM_BATCHED_TOKENS=262144`
+- `VLLM_GPU_MEMORY_UTILIZATION=0.92`
+- `VLLM_KV_CACHE_DTYPE=turboquant_k8v4`
+- `VLLM_SPECULATIVE_CONFIG={"method":"mtp","model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}`
 - `VLLM_DTYPE=auto`
 - `VLLM_QUANTIZATION=none`
-- `VLLM_TRUST_REMOTE_CODE=off`
-- `MEMORY_LIMIT=64GiB`
+- `VLLM_TRUST_REMOTE_CODE=on`
+- `MEMORY_LIMIT=96GiB`
 
-`HSA_OVERRIDE_GFX_VERSION` is exposed for consumer AMD GPUs that need an
-override. Leave it empty on supported ROCm hardware.
+The ROCm manifest keeps a small Qwen default so operators can confirm the AMD
+runtime before moving to a larger model. `HSA_OVERRIDE_GFX_VERSION` is exposed
+there for consumer AMD GPUs that need an override. Leave it empty on supported
+ROCm hardware.
 
 ## Local development
 
@@ -58,6 +68,10 @@ override. Leave it empty on supported ROCm hardware.
 cd wrapper
 go test ./...
 go build ./...
+
+docker buildx build \
+  --build-arg VLLM_BASE=vllm/vllm-openai:latest \
+  -t smoothnas-plugin-vllm:dev-cuda .
 
 docker buildx build \
   --build-arg VLLM_BASE=vllm/vllm-openai-rocm:latest \

@@ -1,9 +1,9 @@
-# SmoothNAS plugin: vLLM ROCm with bearer-auth wrapper.
+# SmoothNAS plugin: vLLM with bearer-auth wrapper.
 #
 # The final image layers a small Go reverse proxy/auth gate in front of
-# vLLM's official ROCm OpenAI-compatible server image.
+# vLLM's official OpenAI-compatible server image.
 
-ARG VLLM_BASE=vllm/vllm-openai-rocm:latest
+ARG VLLM_BASE=vllm/vllm-openai:latest
 
 FROM golang:1.24-alpine AS wrapper-build
 WORKDIR /src
