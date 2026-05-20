@@ -47,15 +47,16 @@ First-run defaults target Gemma4 Q5 26B on the SmoothNAS runner:
 - `VLLM_LOAD_FORMAT=gguf`
 - `VLLM_TENSOR_PARALLEL_SIZE=1`
 - `VLLM_MAX_MODEL_LEN=65536`
-- `VLLM_MAX_NUM_SEQS=4`
-- `VLLM_MAX_NUM_BATCHED_TOKENS=262144`
+- `VLLM_MAX_NUM_SEQS=1` on ROCm for 24 GiB cards
+- `VLLM_MAX_NUM_BATCHED_TOKENS=65536` on ROCm for 24 GiB cards
 - `VLLM_GPU_MEMORY_UTILIZATION=0.92`
-- `VLLM_KV_CACHE_DTYPE=turboquant_k8v4`
+- `VLLM_KV_CACHE_DTYPE=auto` on ROCm; Gemma4 forces TRITON_ATTN and vLLM rejects `turboquant_k8v4` there
+- `VLLM_CPU_OFFLOAD_GB=32` on ROCm for 24 GiB cards
 - `VLLM_SPECULATIVE_CONFIG={"method":"mtp","model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}`
 - `VLLM_DTYPE=float16`
 - `VLLM_QUANTIZATION=none`
 - `VLLM_TRUST_REMOTE_CODE=on`
-- `MEMORY_LIMIT=16GiB`
+- `MEMORY_LIMIT=64GiB` on ROCm when CPU offload is enabled
 
 Gemma4 tool-use and reasoning parser flags are also exposed for operators who
 need OpenAI tool-calling behavior:
