@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.3...v0.2.4) (2026-05-20)
+
+
+### Bug Fixes
+
+* restore ROCm rocroller runtime library ([#9](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/issues/9)) ([677263d](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/commit/677263d7c18ca996edc041d36718366b30fec922))
+
 ## [0.2.3](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.2...v0.2.3) (2026-05-20)
 
 
