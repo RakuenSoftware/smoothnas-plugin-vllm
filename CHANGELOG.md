@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.2...v0.2.3) (2026-05-20)
+
+
+### Bug Fixes
+
+* make ROCm validation version agnostic ([#7](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/issues/7)) ([9201c25](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/commit/9201c256c312d878b645d301f754ad9af3cc2dc4))
+
 ## [0.2.2](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.1...v0.2.2) (2026-05-20)
 
 

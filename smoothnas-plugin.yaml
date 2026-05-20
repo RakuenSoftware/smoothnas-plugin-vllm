@@ -2,7 +2,7 @@ apiVersion: smoothnas.io/v1
 kind: Plugin
 metadata:
   name: vllm
-  version: 0.2.2
+  version: 0.2.3
   description: |
     vLLM OpenAI-compatible inference server using the official CUDA image for
     NVIDIA GPUs. Hugging Face cache data lives on the NVME slot of an
