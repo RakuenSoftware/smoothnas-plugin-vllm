@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /smoothnas-vllm-wrapper .
 
 FROM ${VLLM_BASE}
 
-RUN if [ -d /opt/rocm-7.2.2 ]; then \
+RUN if [ -d /opt/rocm/lib ]; then \
       set -eux; \
       ldconfig; \
       export LD_LIBRARY_PATH="/usr/local/lib/python3.12/dist-packages/torch/lib:/opt/rocm/lib:/usr/local/lib:${LD_LIBRARY_PATH:-}"; \
