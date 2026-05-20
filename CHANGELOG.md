@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.4...v0.2.5) (2026-05-20)
+
+
+### Bug Fixes
+
+* tune ROCm Gemma4 runtime defaults ([#11](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/issues/11)) ([99edf72](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/commit/99edf72c8e4ee51b5adeff7c53b0afed9d503e8c))
+
 ## [0.2.4](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.3...v0.2.4) (2026-05-20)
 
 
