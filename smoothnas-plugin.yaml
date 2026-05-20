@@ -2,7 +2,7 @@ apiVersion: smoothnas.io/v1
 kind: Plugin
 metadata:
   name: vllm
-  version: 0.1.0
+  version: 0.2.0
   description: |
     vLLM OpenAI-compatible inference server using the official CUDA image for
     NVIDIA GPUs. Hugging Face cache data lives on the NVME slot of an
@@ -48,7 +48,9 @@ config:
     type: string
     label: Model
     default: unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q5_K_XL
-    description: Hugging Face model id, local model path, or GGUF repo:quant passed to vLLM.
+    description: >-
+      Hugging Face model id, local model path, or GGUF repo:quant passed to
+      vLLM.
   - key: HF_TOKEN
     type: string
     label: Hugging Face token
@@ -129,7 +131,9 @@ config:
       - value: fp8_e5m2
       - value: int8_per_token_head
       - value: turboquant_k8v4
-    description: vLLM KV cache storage type. turboquant_k8v4 is the TurboQuant K8/V4 preset.
+    description: >-
+      vLLM KV cache storage type. turboquant_k8v4 is the TurboQuant K8/V4
+      preset.
   - key: VLLM_KV_CACHE_MEMORY_BYTES
     type: string
     label: KV cache memory
@@ -145,7 +149,8 @@ config:
   - key: VLLM_SPECULATIVE_CONFIG
     type: string
     label: Speculative config
-    default: '{"method":"mtp","model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}'
+    default: >-
+      {"method":"mtp","model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}
     description: JSON passed to --speculative-config for Gemma4 MTP.
   - key: VLLM_TOOL_CALL_PARSER
     type: string
@@ -164,7 +169,9 @@ config:
     options:
       - value: 'off'
       - value: 'on'
-    description: Enable vLLM automatic tool-call detection when a tool parser is configured.
+    description: >-
+      Enable vLLM automatic tool-call detection when a tool parser is
+      configured.
   - key: VLLM_CHAT_TEMPLATE
     type: string
     label: Chat template
@@ -174,7 +181,9 @@ config:
     type: string
     label: Multimodal limits
     default: ''
-    description: Optional JSON passed to --limit-mm-per-prompt, such as {"image":0,"audio":0}.
+    description: >-
+      Optional JSON passed to --limit-mm-per-prompt, such as
+      {"image":0,"audio":0}.
   - key: VLLM_ENABLE_PREFIX_CACHING
     type: select
     label: Prefix caching
