@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.1...v0.2.2) (2026-05-20)
+
+
+### Bug Fixes
+
+* preserve ROCm base vLLM stack ([#5](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/issues/5)) ([fd66efd](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/commit/fd66efd548436910eeb6beb8b79ad5e6fd94e099))
+
 ## [0.2.1](https://github.com/RakuenSoftware/smoothnas-plugin-vllm/compare/v0.2.0...v0.2.1) (2026-05-20)
 
 
