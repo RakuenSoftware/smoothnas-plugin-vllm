@@ -99,18 +99,18 @@ config:
   - key: VLLM_MAX_NUM_SEQS
     type: number
     label: Max sequences
-    default: '4'
+    default: '1'
     min: '1'
     step: '1'
     description: Maximum number of concurrent 64k slots.
   - key: VLLM_MAX_NUM_BATCHED_TOKENS
     type: number
     label: Max batched tokens
-    default: '262144'
+    default: '65536'
     min: '1024'
     step: '1024'
     unit: tokens
-    description: Scheduler token budget for four 64k slots.
+    description: Scheduler token budget for the active 64k slot.
   - key: VLLM_GPU_MEMORY_UTILIZATION
     type: number
     label: GPU memory utilization
@@ -122,7 +122,7 @@ config:
   - key: VLLM_KV_CACHE_DTYPE
     type: select
     label: KV cache dtype
-    default: turboquant_k8v4
+    default: auto
     options:
       - value: auto
       - value: fp8
@@ -130,7 +130,7 @@ config:
       - value: fp8_e5m2
       - value: int8_per_token_head
       - value: turboquant_k8v4
-    description: vLLM KV cache storage type. turboquant_k8v4 is the TurboQuant K8/V4 preset.
+    description: vLLM KV cache storage type. Gemma4 on ROCm forces TRITON_ATTN, which does not currently accept turboquant_k8v4.
   - key: VLLM_KV_CACHE_MEMORY_BYTES
     type: string
     label: KV cache memory
@@ -139,7 +139,7 @@ config:
   - key: VLLM_CPU_OFFLOAD_GB
     type: number
     label: CPU offload GiB
-    default: ''
+    default: '32'
     min: '0'
     step: '1'
     description: Optional CPU offload budget for fitting larger checkpoints.
@@ -247,7 +247,7 @@ config:
   - key: MEMORY_LIMIT
     type: string
     label: Container memory
-    default: 16GiB
+    default: 64GiB
     description: LXC memory limit for the vLLM container.
   - key: SMOOTHNAS_BEARER_EXPECTED
     type: string
