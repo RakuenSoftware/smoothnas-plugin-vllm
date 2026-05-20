@@ -14,13 +14,20 @@ FROM ${VLLM_BASE}
 
 RUN if [ -d /opt/rocm/lib ]; then \
       set -eux; \
+      mkdir -p /tmp/rocm-debs; \
+      cd /tmp/rocm-debs; \
+      apt-get update; \
+      apt-get download hipblaslt; \
+      for deb in ./*.deb; do dpkg-deb -x "${deb}" /; done; \
       ldconfig; \
       export LD_LIBRARY_PATH="/usr/local/lib/python3.12/dist-packages/torch/lib:/opt/rocm/lib:/usr/local/lib:${LD_LIBRARY_PATH:-}"; \
       test -s /usr/local/lib/python3.12/dist-packages/torch/lib/libtorch_cpu.so; \
       test -s /usr/local/lib/python3.12/dist-packages/torch/lib/libtorch_hip.so; \
       test -s /opt/rocm/lib/libMIOpen.so.1; \
+      test -s /opt/rocm/lib/librocroller.so.1; \
       test -s /opt/rocm/lib/librocsolver.so.0; \
       python3 -c 'import torch, triton, triton.backends, vllm; import vllm._rocm_C; print("torch", torch.__version__, "hip", torch.version.hip); print("triton", getattr(triton, "__version__", "unknown")); print("vllm", getattr(vllm, "__version__", "unknown"))'; \
+      rm -rf /tmp/rocm-debs /var/lib/apt/lists/*; \
     fi
 
 COPY --from=wrapper-build /smoothnas-vllm-wrapper /usr/local/bin/smoothnas-vllm-wrapper
