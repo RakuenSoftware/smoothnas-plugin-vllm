@@ -104,3 +104,7 @@ To sideload a dev image into a SmoothNAS dev host, edit `artifact.image` in
 4. Attaches the installable manifest and `index.json` to the GitHub release
 
 `release-please` opens release PRs from conventional commits on `main`.
+
+## License
+
+This plugin is licensed under the [AGPL-3.0](LICENSE).
